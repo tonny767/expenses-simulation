@@ -1,0 +1,85 @@
+-- +goose Up
+-- --------------------
+-- Create tables and seed data
+-- --------------------
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    id BIGSERIAL PRIMARY KEY,
+    uuid UUID NOT NULL DEFAULT gen_random_uuid(),
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    amount_idr BIGINT NOT NULL,
+    description TEXT NOT NULL,
+    receipt_url TEXT,
+    status VARCHAR(50) NOT NULL,
+    submitted_at TIMESTAMP NOT NULL,
+    processed_at TIMESTAMP,
+    requires_approval BOOLEAN NOT NULL,
+    auto_approved BOOLEAN NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS approvals (
+    id BIGSERIAL PRIMARY KEY,
+    expense_id BIGINT NOT NULL REFERENCES expenses(id),
+    approver_id BIGINT NULL REFERENCES users(id),
+    status VARCHAR(50) NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status);
+CREATE INDEX IF NOT EXISTS idx_approvals_expense_id ON approvals(expense_id);
+
+-- -----------------------
+-- Seed additional users
+-- -----------------------
+INSERT INTO users (email, name, role, password_hash)
+VALUES
+('alice@manager.com', 'Alice Manager', 'manager', '$2a$10$FZxuzOEihHwkJr2TVv80zuRjeXnnMxaPx7da6He90FLMx2V72/LBm'),
+('bob@user.com', 'Bob Employee', 'user', '$2a$10$FZxuzOEihHwkJr2TVv80zuRjeXnnMxaPx7da6He90FLMx2V72/LBm'),
+('dave@user.com', 'Dave Employee', 'user', '$2a$10$FZxuzOEihHwkJr2TVv80zuRjeXnnMxaPx7da6He90FLMx2V72/LBm'),
+('eve@user.com', 'Eve Employee', 'user', '$2a$10$FZxuzOEihHwkJr2TVv80zuRjeXnnMxaPx7da6He90FLMx2V72/LBm');
+
+INSERT INTO expenses (user_id, amount_idr, description, receipt_url, status, submitted_at, requires_approval, auto_approved)
+VALUES
+-- Bob
+((SELECT id FROM users WHERE email='bob@user.com'), 500000, 'Lunch with client', 'https://via.placeholder.com/150', 'pending', NOW(), true, false),
+((SELECT id FROM users WHERE email='bob@user.com'), 80000, 'Taxi fare', 'https://via.placeholder.com/150', 'approved', NOW() - INTERVAL '2 days', false, true),
+-- Dave
+((SELECT id FROM users WHERE email='dave@user.com'), 120000, 'Office supplies', 'https://via.placeholder.com/150', 'pending', NOW() - INTERVAL '1 day', true, false),
+((SELECT id FROM users WHERE email='dave@user.com'), 450000, 'Team lunch', 'https://via.placeholder.com/150', 'approved', NOW() - INTERVAL '3 days', false, true),
+-- Eve
+((SELECT id FROM users WHERE email='eve@user.com'), 300000, 'Project materials', 'https://via.placeholder.com/150', 'pending', NOW(), true, false),
+((SELECT id FROM users WHERE email='eve@user.com'), 100000, 'Taxi fare', 'https://via.placeholder.com/150', 'approved', NOW() - INTERVAL '4 days', false, true);
+
+-- Seed approvals for the first expense
+INSERT INTO approvals (expense_id, approver_id, status, notes, created_at)
+VALUES
+(
+  (SELECT id FROM expenses WHERE description='Lunch with client'),
+  (SELECT id FROM users WHERE email='alice@manager.com'),
+  'pending',
+  'Waiting for manager approval',
+  NOW()
+);
+
+-- +goose Down
+-- --------------------
+-- Drop tables (rollback)
+-- --------------------
+DROP TABLE IF EXISTS approvals;
+DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS users;
