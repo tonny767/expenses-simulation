@@ -57,12 +57,11 @@ const props = defineProps({
   confirmLabel: { type: String, default: 'Approve' },
   cancelLabel: { type: String, default: 'Cancel' },
   actionType: { type: String, default: 'approve' }, // approve | reject
-  onActionComplete: { type: Function } // callback after success
+  onActionComplete: { type: Function }
 })
 
 const { role, userId } = useAuth()
 const api = useApi(role.value)
-
 const open = ref(false)
 const notes = ref('')
 
@@ -72,6 +71,11 @@ const handleConfirm = async () => {
       approver_id: userId.value,
       notes: notes.value
     })
+
+    props.actionType === 'approve'
+      ? alert('Expense has been approved!')
+      : alert('Expense has been rejected!')
+
     notes.value = ''
     open.value = false
     props.onActionComplete?.()

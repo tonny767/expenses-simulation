@@ -9,30 +9,14 @@
 
         <!-- Right side -->
         <div  class="flex items-center gap-6">
-          <!-- Navigation Links -->
-          <NuxtLink 
-            v-if="!isManager" 
-            to="/user/dashboard"
-            class="text-gray-700 hover:text-gray-900 font-medium"
-          >
-            Dashboard
-          </NuxtLink>
-          
-          <NuxtLink 
-            v-if="!isManager" 
-            to="/user/expenses"
-            class="text-gray-700 hover:text-gray-900 font-medium"
-          >
-            My Expenses
-          </NuxtLink>
 
-          <!-- <NuxtLink 
+          <NuxtLink 
             v-if="isManager" 
             to="/manager/approvals"
             class="text-gray-700 hover:text-gray-900 font-medium"
           >
             Pending Approvals
-          </NuxtLink> -->
+          </NuxtLink>
 
           <!-- User Info & Logout -->
           <div class="flex items-center gap-4 border-l pl-6">

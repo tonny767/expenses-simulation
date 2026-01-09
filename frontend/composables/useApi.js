@@ -11,9 +11,7 @@ export const useApi = (role) => {
   const request = async (path, options = {}) => {
     // const isBrowser = import.meta.client
     const url = `${base}${path}`
-    
-    console.log('Request URL:', url)
-    
+        
     return await $fetch(url, {
       ...options,
       credentials: 'include',

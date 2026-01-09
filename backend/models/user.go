@@ -12,6 +12,4 @@ type User struct {
 	Role         constants.UserRole `json:"role"` // "user" or "manager"
 	PasswordHash string             `json:"-"`    // Never send to frontend
 	CreatedAt    time.Time          `json:"created_at"`
-
-	Expenses []Expense `json:"expenses,omitempty" gorm:"foreignKey:UserID"`
 }

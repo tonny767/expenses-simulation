@@ -55,15 +55,23 @@ VALUES
 
 INSERT INTO expenses (user_id, amount_idr, description, receipt_url, status, submitted_at, requires_approval, auto_approved)
 VALUES
--- Bob
-((SELECT id FROM users WHERE email='bob@user.com'), 500000, 'Lunch with client', 'https://via.placeholder.com/150', 'pending', NOW(), true, false),
-((SELECT id FROM users WHERE email='bob@user.com'), 80000, 'Taxi fare', 'https://via.placeholder.com/150', 'approved', NOW() - INTERVAL '2 days', false, true),
--- Dave
-((SELECT id FROM users WHERE email='dave@user.com'), 120000, 'Office supplies', 'https://via.placeholder.com/150', 'pending', NOW() - INTERVAL '1 day', true, false),
-((SELECT id FROM users WHERE email='dave@user.com'), 450000, 'Team lunch', 'https://via.placeholder.com/150', 'approved', NOW() - INTERVAL '3 days', false, true),
--- Eve
-((SELECT id FROM users WHERE email='eve@user.com'), 300000, 'Project materials', 'https://via.placeholder.com/150', 'pending', NOW(), true, false),
-((SELECT id FROM users WHERE email='eve@user.com'), 100000, 'Taxi fare', 'https://via.placeholder.com/150', 'approved', NOW() - INTERVAL '4 days', false, true);
+-- Bob (4)
+((SELECT id FROM users WHERE email='bob@user.com'), 500000, 'Lunch with client', '/receipt-placeholder.jpg', 'pending',  NOW(),                       true,  false),
+((SELECT id FROM users WHERE email='bob@user.com'), 80000,  'Taxi fare',        '/receipt-placeholder.jpg', 'approved', NOW() - INTERVAL '2 days', false, true),
+((SELECT id FROM users WHERE email='bob@user.com'), 1200000,'Hotel stay',       '/receipt-placeholder.jpg', 'pending',  NOW() - INTERVAL '1 day',  true,  false),
+((SELECT id FROM users WHERE email='bob@user.com'), 45000,  'Coffee meeting',   '/receipt-placeholder.jpg', 'approved', NOW() - INTERVAL '5 days', false, true),
+
+-- Dave (4)
+((SELECT id FROM users WHERE email='dave@user.com'), 120000, 'Office supplies',  '/receipt-placeholder.jpg', 'pending',  NOW() - INTERVAL '1 day',  true,  false),
+((SELECT id FROM users WHERE email='dave@user.com'), 450000, 'Team lunch',       '/receipt-placeholder.jpg', 'approved', NOW() - INTERVAL '3 days', false, true),
+((SELECT id FROM users WHERE email='dave@user.com'), 2000000,'Client workshop',  '/receipt-placeholder.jpg', 'pending',  NOW(),                       true,  false),
+((SELECT id FROM users WHERE email='dave@user.com'), 95000,  'Parking fee',      '/receipt-placeholder.jpg', 'approved', NOW() - INTERVAL '6 days', false, true),
+
+-- Eve (4)
+((SELECT id FROM users WHERE email='eve@user.com'), 300000, 'Project materials', '/receipt-placeholder.jpg', 'pending',  NOW(),                       true,  false),
+((SELECT id FROM users WHERE email='eve@user.com'), 100000, 'Taxi fare',         '/receipt-placeholder.jpg', 'approved', NOW() - INTERVAL '4 days', false, true),
+((SELECT id FROM users WHERE email='eve@user.com'), 1750000,'Design software',   '/receipt-placeholder.jpg', 'pending',  NOW() - INTERVAL '2 days', true,  false),
+((SELECT id FROM users WHERE email='eve@user.com'), 60000,  'Snacks',            '/receipt-placeholder.jpg', 'approved', NOW() - INTERVAL '7 days', false, true);
 
 -- Seed approvals for the first expense
 INSERT INTO approvals (expense_id, approver_id, status, notes, created_at)

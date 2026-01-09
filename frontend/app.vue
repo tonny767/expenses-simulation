@@ -7,6 +7,6 @@
   </div>
 </template>
 
-<script>
+<script setup>
   import { Navbar } from './components/ui/navbar';
 </script>

@@ -23,6 +23,7 @@ type Expense struct {
 	SubmittedAt      time.Time               `json:"submitted_at"`
 	ProcessedAt      *time.Time              `json:"processed_at"`
 
+	User     *User     `json:"user" gorm:"foreignKey:UserID;references:ID"`
 	Approval *Approval `json:"approval" gorm:"foreignKey:ExpenseID"`
 }
 
