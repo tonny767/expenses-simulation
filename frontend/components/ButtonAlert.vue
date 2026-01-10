@@ -14,26 +14,26 @@
 
       <div class="mt-4">
         <label class="block text-sm font-medium">Notes (optional)</label>
-        <textarea
+        <Textarea
           v-model="notes"
-          rows="3"
+          :rows="5"
           class="mt-1 w-full border rounded p-2 text-sm"
           placeholder="Add a note..."
-        ></textarea>
+        />
       </div>
 
       <AlertDialogFooter class="mt-4 flex justify-end gap-2">
         <Button
           size="sm"
-          variant="destructive"
+          variant="outline"
           @click="handleCancel"
         >
           {{ cancelLabel }}
         </Button>
         <Button
           size="sm"
-          variant="default"
-          class="bg-green-600 text-white hover:bg-green-700"
+
+          :variant="actionType == 'approve' ? 'green' : 'destructive'"
           @click="handleConfirm"
         >
           {{ confirmLabel }}
@@ -49,6 +49,7 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { Button } from '~/components/ui/button'
 import { useApi } from '~/composables/useApi'
 import { useAuth } from '~/composables/useAuth'
+import { Textarea } from '~/components/ui/textarea'
 
 const props = defineProps({
   expenseId: { type: Number, required: true },
@@ -80,7 +81,7 @@ const handleConfirm = async () => {
     open.value = false
     props.onActionComplete?.()
   } catch (err) {
-    console.error(`Failed to ${props.actionType} expense:`, err)
+    alert(`Failed to ${props.actionType} expense:`, err)
   }
 }
 

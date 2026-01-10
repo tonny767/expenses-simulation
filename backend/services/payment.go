@@ -30,6 +30,14 @@ func NewPaymentService() PaymentService {
 	}
 }
 
+// ONLY FOR TESTING PURPOSES
+func NewPaymentServiceWithBaseURL(baseURL string) PaymentService {
+	return &paymentService{
+		client:  &http.Client{Timeout: 10 * time.Second},
+		baseURL: baseURL,
+	}
+}
+
 type PaymentRequest struct {
 	Amount     int64  `json:"amount"`
 	ExternalID string `json:"external_id"`
@@ -82,11 +90,9 @@ func (s *paymentService) ProcessPayment(ctx context.Context, expense *models.Exp
 
 	if expense.AutoApproved {
 		expense.Status = constants.ExpenseStatusCompleted
-		approval.Status = constants.ApprovalStatusApproved
 		approval.Notes = "auto-approved"
 	} else {
 		expense.Status = constants.ExpenseStatusCompleted
-		approval.Status = constants.ApprovalStatusApproved
 	}
 
 	expense.ProcessedAt = &now

@@ -5,9 +5,18 @@ import (
 	"backend/middleware"
 
 	"github.com/gin-gonic/gin"
+
+	_ "backend/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func AuthRoutes(r *gin.RouterGroup) {
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/health-check", controllers.HealthCheck)
+
 	auth := r.Group("/auth")
 	{
 		auth.POST("/login", controllers.Login)

@@ -37,7 +37,6 @@ func SubmitExpense(input SubmitExpenseInput) (*models.Expense, *models.Approval,
 	}
 
 	approval := &models.Approval{
-		ExpenseID:  expense.ID,
 		ApproverID: nil,
 		Notes:      "",
 		Status:     constants.ApprovalStatusPending,
@@ -47,7 +46,6 @@ func SubmitExpense(input SubmitExpenseInput) (*models.Expense, *models.Approval,
 	return expense, approval, nil
 }
 
-// ---- Approve Expense ----
 type ApproveExpenseInput struct {
 	Expense    *models.Expense
 	ApproverID *int64
@@ -62,9 +60,7 @@ func ApproveExpense(input ApproveExpenseInput) (*models.Expense, *models.Approva
 		return nil, nil, err
 	}
 
-	now := time.Now()
 	input.Expense.Status = constants.ExpenseStatusApproved
-	input.Expense.ProcessedAt = &now
 
 	input.Expense.Approval.Status = constants.ApprovalStatusApproved
 	input.Expense.Approval.ApproverID = input.ApproverID
@@ -73,7 +69,6 @@ func ApproveExpense(input ApproveExpenseInput) (*models.Expense, *models.Approva
 	return input.Expense, input.Expense.Approval, nil
 }
 
-// ---- Reject Expense ----
 type RejectExpenseInput struct {
 	Expense    *models.Expense
 	ApproverID *int64
@@ -89,6 +84,7 @@ func RejectExpense(input RejectExpenseInput) (*models.Expense, *models.Approval,
 	}
 
 	input.Expense.Status = constants.ExpenseStatusRejected
+
 	input.Expense.Approval.Status = constants.ApprovalStatusRejected
 	input.Expense.Approval.ApproverID = input.ApproverID
 	input.Expense.Approval.Notes = input.Notes

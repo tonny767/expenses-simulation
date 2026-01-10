@@ -44,7 +44,7 @@
             </TableCell>
 
             <TableCell>{{ formatDateTime(expense.submitted_at) }}</TableCell>
-            <TableCell>{{ expense.user_id }}</TableCell>
+            <TableCell>{{ expense.user?.name }}</TableCell>
 
             <TableCell class="text-right">
               <div class="flex justify-end gap-2">
@@ -117,11 +117,17 @@
 </template>
 
 <script setup>
+
+useHead({
+  title: 'Pending Approvals'
+})
+
 import { ref, computed, onMounted } from 'vue'
 import Container from '~/components/ui/container/Container.vue'
 import { Button } from '~/components/ui/button'
 import { useApi } from '~/composables/useApi'
 import ButtonAlert from '~/components/ButtonAlert.vue'
+import { useHead } from 'nuxt/app'
 
 const expenses = ref([])
 const total = ref(0)

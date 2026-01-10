@@ -139,6 +139,11 @@
 </template>
 
 <script setup>
+
+useHead({
+  title: 'Expense: Details'
+})
+
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Container from '~/components/ui/container/Container.vue'

@@ -35,6 +35,8 @@ func (w *PaymentWorker) ProcessExpensePaymentAsync(expenseID int64) {
 
 		ctx := context.Background()
 
+		log.Printf("Starting payment processing for expense %d", expenseID)
+
 		// Retry logic, 3 times max, can be improved by making an api to retry failed payments manually
 		for attempt := 1; attempt <= MaxRetries; attempt++ {
 			// Fetch fresh expense data

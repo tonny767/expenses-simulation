@@ -1,0 +1,495 @@
+basePath: /api
+definitions:
+  actions.SubmitExpenseInput:
+    properties:
+      amount_idr:
+        type: integer
+      description:
+        type: string
+      receipt_url:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  constants.ApprovalStatus:
+    enum:
+    - pending
+    - approved
+    - rejected
+    type: string
+    x-enum-varnames:
+    - ApprovalStatusPending
+    - ApprovalStatusApproved
+    - ApprovalStatusRejected
+  constants.ExpenseStatus:
+    enum:
+    - pending
+    - approved
+    - rejected
+    - auto-approved
+    - completed
+    type: string
+    x-enum-varnames:
+    - ExpenseStatusPending
+    - ExpenseStatusApproved
+    - ExpenseStatusRejected
+    - ExpenseStatusAutoApproved
+    - ExpenseStatusCompleted
+  constants.UserRole:
+    enum:
+    - user
+    - manager
+    type: string
+    x-enum-varnames:
+    - UserRoleUser
+    - UserRoleManager
+  controllers.ExpensesListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Expense'
+        type: array
+      meta:
+        $ref: '#/definitions/controllers.PaginationMeta'
+    type: object
+  controllers.HealthCheckResponse:
+    properties:
+      database:
+        example: up
+        type: string
+      status:
+        example: ok
+        type: string
+      time:
+        example: "2023-10-05T14:48:00Z"
+        type: string
+    type: object
+  controllers.LoginResponse:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/constants.UserRole'
+        example: constants.UserRoleUser
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp
+        type: string
+    type: object
+  controllers.MessageResponse:
+    properties:
+      message:
+        example: operation successful
+        type: string
+    type: object
+  controllers.PaginationMeta:
+    properties:
+      limit:
+        example: 10
+        type: integer
+      page:
+        example: 1
+        type: integer
+      total:
+        example: 42
+        type: integer
+    type: object
+  controllers.StatusExpenseRequest:
+    properties:
+      approver_id:
+        example: 99
+        type: integer
+      notes:
+        example: Approved
+        type: string
+    type: object
+  httputil.HTTPError:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: status bad request
+        type: string
+    type: object
+  models.Approval:
+    properties:
+      approver_id:
+        type: integer
+      created_at:
+        type: string
+      expense_id:
+        type: integer
+      id:
+        type: integer
+      notes:
+        type: string
+      status:
+        $ref: '#/definitions/constants.ApprovalStatus'
+      updated_at:
+        type: string
+    type: object
+  models.Expense:
+    properties:
+      amount_idr:
+        type: integer
+      approval:
+        $ref: '#/definitions/models.Approval'
+      auto_approved:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      processed_at:
+        type: string
+      receipt_url:
+        type: string
+      requires_approval:
+        type: boolean
+      status:
+        $ref: '#/definitions/constants.ExpenseStatus'
+      submitted_at:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+      uuid:
+        type: string
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/constants.UserRole'
+        description: '"user" or "manager"'
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: tonny.wijayajuly2001@gmail.com
+    name: API Support
+  description: Expense submission, approval, and payment processing system
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Expense Management System API
+  version: "1.0"
+paths:
+  /expenses:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of expenses for the authenticated user
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by expense status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Get user's expenses
+      tags:
+      - Expenses
+    post:
+      consumes:
+      - application/json
+      description: Submit a new expense for reimbursement
+      parameters:
+      - description: Expense payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/actions.SubmitExpenseInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Create a new expense
+      tags:
+      - Expenses
+  /expenses/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information of a single expense
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Expense'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Get expense by ID
+      tags:
+      - Expenses
+  /health-check:
+    get:
+      consumes:
+      - application/json
+      description: Check the health status of the application and database connectivity
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.HealthCheckResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/controllers.HealthCheckResponse'
+      summary: Health check
+      tags:
+      - Health
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password, returns JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: input
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      summary: User login
+      tags:
+      - auth
+  /manager/expenses:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of all expenses (manager only)
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by expense status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.ExpensesListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Get all expenses (manager only)
+      tags:
+      - ManagerExpenses
+  /manager/expenses/{id}/approve:
+    put:
+      consumes:
+      - application/json
+      description: Approve a pending expense (manager only)
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Approval payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.StatusExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Approve an expense
+      tags:
+      - Manager
+  /manager/expenses/{id}/reject:
+    put:
+      consumes:
+      - application/json
+      description: Reject a pending expense (manager only)
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Rejection payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.StatusExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Reject an expense
+      tags:
+      - Manager
+securityDefinitions:
+  CookieAuth:
+    in: cookie
+    name: access_token
+    type: apiKey
+swagger: "2.0"

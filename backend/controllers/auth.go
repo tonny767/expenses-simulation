@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"backend/constants"
 	"backend/db"
 	"backend/models"
 
@@ -14,6 +15,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type LoginResponse struct {
+	Token string             `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp"`
+	ID    uint               `json:"id" example:"1"`
+	Role  constants.UserRole `json:"role" example:"constants.UserRoleUser"`
+	Name  string             `json:"name" example:"John Doe"`
+	Email string             `json:"email" example:"john@example.com"`
+}
+
+// @Summary User login
+// @Description Authenticate user with email and password, returns JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body object{email=string,password=string} true "Login credentials"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {object} httputil.HTTPError
+// @Failure 401 {object} httputil.HTTPError
+// @Failure 500 {object} httputil.HTTPError
+// @Router /login [post]
 func Login(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email"`
@@ -73,11 +93,11 @@ func Login(c *gin.Context) {
 	c.Writer.Header().Add("Set-Cookie", fmt.Sprintf("user_name=%s; Path=/; Max-Age=%d; SameSite=Lax", user.Name, maxAge))
 
 	// Also return in response body for immediate use
-	c.JSON(http.StatusOK, gin.H{
-		"token": tokenString,
-		"id":    user.ID,
-		"role":  user.Role,
-		"name":  user.Name,
-		"email": user.Email,
+	c.JSON(http.StatusOK, LoginResponse{
+		Token: tokenString,
+		ID:    uint(user.ID),
+		Role:  user.Role,
+		Name:  user.Name,
+		Email: user.Email,
 	})
 }

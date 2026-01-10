@@ -29,7 +29,7 @@ export default defineNuxtConfig({
   
   runtimeConfig: {
     public: {
-      backendUrl: 'http://localhost:3000/v1',
+      backendUrl: `${import.meta.env.NUXT_URL}/v1`,
     },
   },
 
@@ -37,7 +37,7 @@ export default defineNuxtConfig({
     devProxy: {
       //needed to do this workaround to call /api because its been acting up (redirect to nuxt pages instead of api calls)
       '/v1': {
-        target: 'http://localhost:8080',
+        target: `${import.meta.env.BACKEND_URL || 'http://localhost:8080'}`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/v1/, '')
       }

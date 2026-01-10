@@ -38,6 +38,9 @@
 </template>
 
 <script setup>
+useHead({
+  title: 'Login'
+})
 const { login } = useAuth()
 const api = useApi()
 
@@ -61,7 +64,7 @@ const submit = async () => {
     // Redirect based on role
     await navigateTo('/dashboard')
 } catch (err) {
-    error.value = err?.data?.message || err?.message || 'Login failed'
+    error.value = err?.data?.error || 'Login failed'
   } finally {
     loading.value = false
   }

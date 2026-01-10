@@ -66,7 +66,7 @@
                   Minimum amount is Rp 10.000
                 </p>
                 
-                <!-- Too High -->
+                <!-- > 50mil -->
                 <p v-else-if="newExpense.amount_idr > 50000000" class="text-xs text-red-600 mt-1 flex items-center gap-1">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -74,7 +74,7 @@
                   Maximum amount is Rp 50.000.000
                 </p>
                 
-                <!-- Requires Approval Warning -->
+                <!-- >= 1mil - <= 50mil -->
                 <p v-else-if="newExpense.amount_idr >= 1000000" class="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -82,7 +82,7 @@
                   This amount requires manager approval
                 </p>
                 
-                <!-- Auto-approved (Valid Amount) -->
+                <!-- >= 10k - < 1mil -->
                 <p v-else class="text-xs text-green-600 mt-1 flex items-center gap-1">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -162,6 +162,8 @@
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Submitted</TableHead>
+            <TableHead>Updated At</TableHead>
+
             <TableHead v-if="isManager">User</TableHead>
             <TableHead v-if="isManager" class="text-right">Action</TableHead>
           </TableRow>
@@ -224,6 +226,7 @@
               </div>       
             </TableCell>
             <TableCell>{{ formatDateTime(expense.submitted_at) }}</TableCell>
+            <TableCell>{{ formatDateTime(expense.updated_at) }}</TableCell>
             <TableCell v-if="isManager">{{ expense.user?.name || '-' }}</TableCell>
             <TableCell v-if="isManager" class="text-right">
               <div v-if="canManage(expense)" class="flex justify-end gap-2">
@@ -308,6 +311,11 @@
 </template>
 
 <script setup>
+
+useHead({
+  title: 'Dashboard'
+})
+
 import { ref, computed } from 'vue'
 import Container from '~/components/ui/container/Container.vue'
 import { Button } from '~/components/ui/button'
@@ -329,6 +337,7 @@ import {
   HoverCardTrigger,
   HoverCardContent,
 } from '~/components/ui/hover-card'
+import { useHead } from 'nuxt/app'
 
 const { userName, role, userId } = useAuth()
 
@@ -350,6 +359,7 @@ const newExpense = ref({
 
 const isManager = ref(role.value === 'manager')
 
+// pagination computed
 const totalPages = computed(() => Math.ceil(total.value / limit.value))
 
 const startIndex = computed(() => {
@@ -379,7 +389,7 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// Validation computed property
+// Validation for amount
 const isAmountValid = computed(() => {
   const amount = newExpense.value.amount_idr
   if (!amount) return false
@@ -421,7 +431,7 @@ async function fetchExpenses() {
     limit.value = res?.meta?.limit || 10
 
   } catch (err) {
-    error.value = err.message || 'Failed to load expenses'
+    error.value = err?.error || 'Failed to load expenses'
     expenses.value = []
     total.value = 0
   } finally {
@@ -429,19 +439,11 @@ async function fetchExpenses() {
   }
 }
 
-// ✅ Page change handler
 const handlePageChange = (newPage) => {
   if (newPage < 1 || newPage > totalPages.value) return
   page.value = newPage
   fetchExpenses()
 }
-
-// ✅ Status filter change handler
-const handleStatusChange = () => {
-  page.value = 1 // Reset to first page when filtering
-  fetchExpenses()
-}
-
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0]
@@ -517,19 +519,19 @@ const submitExpense = async () => {
     const { post } = useApi(role.value)
     const path = '/expenses'
 
-    await post(path, {
+    const res =await post(path, {
       user_id: userId.value,
       description: newExpense.value.description,
       amount_idr: newExpense.value.amount_idr,
       receipt_url: '/receipt-placeholder.png' // only fake mock image
     })
 
-    alert('Expense created successfully')
+    alert(res?.message)
 
     closeModal()
     await fetchExpenses()
   } catch (err) {
-    alert('Failed to create expense')
+    alert(res?.error || 'Failed to submit expense')
   }
 }
 
@@ -547,15 +549,18 @@ const formatAmount = (amount) => {
 const formatDateTime = (date) => {
   if (!date) return '-'
   try {
-    const d = new Date(date)
-    const day = d.getDate()
-    const month = d.getMonth() + 1
-    const year = d.getFullYear()
-    const hours = String(d.getHours()).padStart(2, '0')
-    const minutes = String(d.getMinutes()).padStart(2, '0')
-    const seconds = String(d.getSeconds()).padStart(2, '0')
+    const d = new Date(date).toLocaleDateString('en-GB', { 
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
     
-    return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`
+    return d
   } catch {
     return 'Invalid date'
   }

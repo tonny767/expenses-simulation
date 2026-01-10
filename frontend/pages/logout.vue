@@ -9,7 +9,6 @@
 <script setup>
 const { logout } = useAuth()
 
-// Run logout immediately when page loads
 onMounted(async () => {
   await logout() // This will clear cookies and redirect to /login
 })
