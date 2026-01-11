@@ -29,3 +29,25 @@ func CanRejectExpense(status c.ExpenseStatus) error {
 	}
 	return nil
 }
+
+func CanTransition(fromStatus c.ExpenseStatus, toStatus c.ExpenseStatus) error {
+	validTransitions := map[c.ExpenseStatus][]c.ExpenseStatus{
+		c.ExpenseStatusPending:   {c.ExpenseStatusApproved, c.ExpenseStatusRejected},
+		c.ExpenseStatusApproved:  {c.ExpenseStatusCompleted},
+		c.ExpenseStatusRejected:  {},
+		c.ExpenseStatusCompleted: {},
+	}
+
+	allowedStatuses, exists := validTransitions[fromStatus]
+	if !exists {
+		return ErrInvalidStatusTransition
+	}
+
+	for _, status := range allowedStatuses {
+		if status == toStatus {
+			return nil
+		}
+	}
+
+	return ErrInvalidStatusTransition
+}

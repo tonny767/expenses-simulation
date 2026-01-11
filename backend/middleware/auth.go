@@ -44,7 +44,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Extract user_id (float64 by default in JSON)
+		// Extract user_id
 		userIDFloat, ok := claims["user_id"].(float64)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user_id in token"})

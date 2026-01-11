@@ -21,7 +21,7 @@ func SubmitExpense(input SubmitExpenseInput) (*models.Expense, *models.Approval,
 		return nil, nil, err
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	requiresApproval := rules.RequiresManagerApproval(input.AmountIDR)
 
 	expense := &models.Expense{
@@ -56,11 +56,17 @@ func ApproveExpense(input ApproveExpenseInput) (*models.Expense, *models.Approva
 	if err := rules.CanApproveExpense(input.Expense.Status); err != nil {
 		return nil, nil, err
 	}
+
 	if err := rules.CanProceed(input.Expense); err != nil {
 		return nil, nil, err
 	}
 
-	input.Expense.Status = constants.ExpenseStatusApproved
+	toStatus := constants.ExpenseStatusApproved // manually for now
+	if err := rules.CanTransition(input.Expense.Status, toStatus); err != nil {
+		return nil, nil, err
+	}
+
+	input.Expense.Status = toStatus
 
 	input.Expense.Approval.Status = constants.ApprovalStatusApproved
 	input.Expense.Approval.ApproverID = input.ApproverID
@@ -83,7 +89,12 @@ func RejectExpense(input RejectExpenseInput) (*models.Expense, *models.Approval,
 		return nil, nil, err
 	}
 
-	input.Expense.Status = constants.ExpenseStatusRejected
+	toStatus := constants.ExpenseStatusRejected // manually for now
+	if err := rules.CanTransition(input.Expense.Status, toStatus); err != nil {
+		return nil, nil, err
+	}
+
+	input.Expense.Status = toStatus
 
 	input.Expense.Approval.Status = constants.ApprovalStatusRejected
 	input.Expense.Approval.ApproverID = input.ApproverID

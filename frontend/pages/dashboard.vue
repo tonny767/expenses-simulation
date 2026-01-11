@@ -26,7 +26,8 @@
           <option value="completed">Completed</option>
         </select>
       </div>
-      <!-- New Expense Dialog -->
+
+      <!-- Create Expense Dialog -->
       <Dialog v-model:open="openModal">
         <DialogContent class="sm:max-w-lg">
           <DialogHeader>
@@ -35,7 +36,6 @@
           </DialogHeader>
 
           <form @submit.prevent="submitExpense" class="space-y-4 mt-4">
-            <!-- Description -->
             <div class="space-y-1">
               <Label for="description">
                 Description <span class="text-red-500">*</span>
@@ -49,16 +49,13 @@
               />
             </div>
 
-            <!-- Amount -->
             <div class="space-y-1">
               <Label for="amount">
                 Amount (IDR) <span class="text-red-500">*</span>
               </Label>
               <MoneyInput v-model="newExpense.amount_idr" />
               
-              <!-- Validation Messages -->
               <div v-if="newExpense.amount_idr">
-                <!-- Too Low -->
                 <p v-if="newExpense.amount_idr < 10000" class="text-xs text-red-600 mt-1 flex items-center gap-1">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -96,7 +93,6 @@
               </p>
             </div>
 
-            <!-- Receipt Upload -->
             <div class="space-y-1">
               <Label for="receipt">
                 Receipt <span class="text-red-500">*</span>
@@ -114,7 +110,6 @@
                   Upload receipt image or PDF (max 5MB)
                 </p>
                 
-                <!-- File Preview -->
                 <div v-if="uploadedFile" class="flex items-center gap-2 p-2 bg-gray-50 rounded-md border">
                   <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -134,7 +129,6 @@
               </div>
             </div>
 
-            <!-- Buttons -->
             <div class="flex justify-end gap-2 mt-6">
               <Button 
                 type="submit" 
@@ -192,7 +186,6 @@
                   {{ expense.status.toUpperCase() }}
                 </span>
 
-                <!-- Notes hover card -->
                 <HoverCard v-if="expense.approval?.notes">
                   <HoverCardTrigger as-child>
                     <button
@@ -283,7 +276,6 @@
             Previous
           </Button>
 
-          <!-- Page Numbers -->
           <div class="flex gap-1">
             <Button
               v-for="pageNum in visiblePages"

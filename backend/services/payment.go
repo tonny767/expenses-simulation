@@ -12,6 +12,7 @@ import (
 
 	"backend/constants"
 	"backend/models"
+	"backend/rules"
 )
 
 type PaymentService interface {
@@ -52,7 +53,6 @@ type PaymentResponse struct {
 	Message string `json:"message"`
 }
 
-// ProcessPayment calls the external processor and updates the structs in-memory
 func (s *paymentService) ProcessPayment(ctx context.Context, expense *models.Expense, approval *models.Approval) (*models.Expense, *models.Approval, error) {
 	if s.baseURL == "" {
 		return nil, nil, errors.New("PAYMENT_BASE_URL not configured")
@@ -81,20 +81,22 @@ func (s *paymentService) ProcessPayment(ctx context.Context, expense *models.Exp
 		return nil, nil, fmt.Errorf("failed to decode payment response: %w", err)
 	}
 
-	// Only proceed if payment succeeded or idempotency
 	if !(resp.StatusCode == http.StatusOK || (resp.StatusCode == http.StatusBadRequest && result.Message == "external id already exists")) {
 		return nil, nil, fmt.Errorf("payment failed with status %d: %s", resp.StatusCode, result.Message)
 	}
 
 	now := time.Now()
 
-	if expense.AutoApproved {
-		expense.Status = constants.ExpenseStatusCompleted
-		approval.Notes = "auto-approved"
-	} else {
-		expense.Status = constants.ExpenseStatusCompleted
+	toStatus := constants.ExpenseStatusCompleted // manually for now
+	if err := rules.CanTransition(expense.Status, toStatus); err != nil {
+		return nil, nil, err
 	}
 
+	if expense.AutoApproved {
+		approval.Notes = "auto-approved"
+	}
+
+	expense.Status = toStatus
 	expense.ProcessedAt = &now
 
 	return expense, approval, nil

@@ -32,7 +32,6 @@
             </TableCell>
             <TableCell>Rp {{ formatAmount(expense.amount_idr) }}</TableCell>
 
-            <!-- Status + hover notes -->
             <TableCell>
               <div class="flex items-center gap-2">
                 <span
@@ -80,10 +79,9 @@
       </Table>
 
       <div v-if="!expenses.length" class="p-6 text-center text-muted-foreground">
-        No pending approvals 🎉
+        No pending approvals
       </div>
 
-      <!-- Pagination (reused) -->
       <div
         v-if="totalPages > 1"
         class="flex items-center justify-between mt-4 pt-4 border-t"

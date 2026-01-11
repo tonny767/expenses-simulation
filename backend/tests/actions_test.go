@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
@@ -52,9 +51,6 @@ func TestSubmitExpense_AutoApproved(t *testing.T) {
 	ctx := context.Background()
 	paymentService := services.NewPaymentServiceWithBaseURL("https://1620e98f-7759-431c-a2aa-f449d591150b.mock.pstmn.io")
 	updatedExpense, updatedApproval, err := paymentService.ProcessPayment(ctx, expense, approval)
-
-	// Wait a bit for goroutine
-	time.Sleep(4 * time.Second)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, updatedExpense)

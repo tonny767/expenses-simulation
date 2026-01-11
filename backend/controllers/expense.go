@@ -311,10 +311,25 @@ func ApproveExpense(c *gin.Context) {
 		return
 	}
 
+	// part of log
+	originalStatus := expense.Status
+
 	updatedExpense, updatedApproval, err := actions.ApproveExpense(actions.ApproveExpenseInput{
 		Expense:    &expense,
 		ApproverID: input.ApproverID,
 		Notes:      input.Notes,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	audit, err := actions.ExpenseAuditLog(actions.ExpenseAuditLogInput{
+		ExpenseID:  updatedExpense.ID,
+		ActorID:    input.ApproverID,
+		FromStatus: originalStatus,
+		ToStatus:   updatedExpense.Status,
+		Reason:     "Expense approved",
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -334,6 +349,13 @@ func ApproveExpense(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update approval"})
 		return
 	}
+
+	if err := tx.Create(&audit).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create audit log"})
+		return
+	}
+
 	tx.Commit()
 
 	worker := workers.NewPaymentWorker()
@@ -380,11 +402,26 @@ func RejectExpense(c *gin.Context) {
 		return
 	}
 
+	// part of log
+	originalStatus := expense.Status
+
 	// Update expense & approval
 	updatedExpense, updatedApproval, err := actions.RejectExpense(actions.RejectExpenseInput{
 		Expense:    &expense,
 		ApproverID: input.ApproverID,
 		Notes:      input.Notes,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	audit, err := actions.ExpenseAuditLog(actions.ExpenseAuditLogInput{
+		ExpenseID:  updatedExpense.ID,
+		ActorID:    input.ApproverID,
+		FromStatus: originalStatus,
+		ToStatus:   updatedExpense.Status,
+		Reason:     "Expense rejected",
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -402,6 +439,13 @@ func RejectExpense(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update approval"})
 		return
 	}
+
+	if err := tx.Create(&audit).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create audit log"})
+		return
+	}
+
 	tx.Commit()
 
 	c.JSON(http.StatusOK, MessageResponse{

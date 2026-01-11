@@ -43,10 +43,8 @@ func main() {
 		}
 	}
 
-	// Connect to DB (reads os.Getenv internally)
 	db.Connect()
 
-	// Setup Gin router
 	router := gin.Default()
 
 	// CORS configuration

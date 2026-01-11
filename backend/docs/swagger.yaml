@@ -26,14 +26,12 @@ definitions:
     - pending
     - approved
     - rejected
-    - auto-approved
     - completed
     type: string
     x-enum-varnames:
     - ExpenseStatusPending
     - ExpenseStatusApproved
     - ExpenseStatusRejected
-    - ExpenseStatusAutoApproved
     - ExpenseStatusCompleted
   constants.UserRole:
     enum:
@@ -168,6 +166,23 @@ definitions:
         type: integer
       uuid:
         type: string
+    type: object
+  models.ExpenseAuditLog:
+    properties:
+      actor_id:
+        type: integer
+      created_at:
+        type: string
+      expense_id:
+        type: integer
+      from_status:
+        $ref: '#/definitions/constants.ExpenseStatus'
+      id:
+        type: integer
+      reason:
+        type: string
+      to_status:
+        $ref: '#/definitions/constants.ExpenseStatus'
     type: object
   models.User:
     properties:
@@ -359,6 +374,52 @@ paths:
       summary: User login
       tags:
       - auth
+  /manager/expense-logs:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of audit logs for expenses status changes (manager
+        only)
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by expense ID
+        in: query
+        name: expense_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  $ref: '#/definitions/models.ExpenseAuditLog'
+                type: array
+              meta:
+                $ref: '#/definitions/controllers.PaginationMeta'
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httputil.HTTPError'
+      security:
+      - CookieAuth: []
+      summary: Get audit logs
+      tags:
+      - Manager
   /manager/expenses:
     get:
       consumes:

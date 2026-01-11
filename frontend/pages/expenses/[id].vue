@@ -1,6 +1,5 @@
 <template>
   <Container class="p-6 space-y-6 max-w-3xl">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-xl font-bold">Expense Details</h2>
@@ -14,7 +13,6 @@
       </Button>
     </div>
 
-    <!-- Summary Card -->
     <div class="rounded-xl border p-6 space-y-4">
       <div>
         <p class="text-sm text-muted-foreground">Description</p>
@@ -39,7 +37,6 @@
         </div>
       </div>
 
-      <!-- Status + Notes -->
       <div class="flex items-center gap-2">
         <span
           class="px-3 py-1 rounded text-sm font-medium"
@@ -73,7 +70,6 @@
         </HoverCard>
       </div>
 
-      <!-- Manager-only -->
       <div v-if="isManager">
         <p class="text-sm text-muted-foreground">Submitted by</p>
         <p>{{ expense?.user.name }}</p>
@@ -102,7 +98,6 @@
       </p>
     </div>
 
-    <!-- Manager Actions -->
     <div
       v-if="canManage(expense)"
       class="flex justify-end gap-3"

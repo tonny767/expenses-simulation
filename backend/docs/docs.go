@@ -276,6 +276,77 @@ const docTemplate = `{
                 }
             }
         },
+        "/manager/expense-logs": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Get paginated list of audit logs for expenses status changes (manager only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Manager"
+                ],
+                "summary": "Get audit logs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by expense ID",
+                        "name": "expense_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/models.ExpenseAuditLog"
+                                    }
+                                },
+                                "meta": {
+                                    "$ref": "#/definitions/controllers.PaginationMeta"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/httputil.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/manager/expenses": {
             "get": {
                 "security": [
@@ -514,14 +585,12 @@ const docTemplate = `{
                 "pending",
                 "approved",
                 "rejected",
-                "auto-approved",
                 "completed"
             ],
             "x-enum-varnames": [
                 "ExpenseStatusPending",
                 "ExpenseStatusApproved",
                 "ExpenseStatusRejected",
-                "ExpenseStatusAutoApproved",
                 "ExpenseStatusCompleted"
             ]
         },
@@ -721,6 +790,32 @@ const docTemplate = `{
                 },
                 "uuid": {
                     "type": "string"
+                }
+            }
+        },
+        "models.ExpenseAuditLog": {
+            "type": "object",
+            "properties": {
+                "actor_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "expense_id": {
+                    "type": "integer"
+                },
+                "from_status": {
+                    "$ref": "#/definitions/constants.ExpenseStatus"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "to_status": {
+                    "$ref": "#/definitions/constants.ExpenseStatus"
                 }
             }
         },

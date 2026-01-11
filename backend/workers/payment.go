@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"backend/actions"
 	"backend/constants"
 	"backend/db"
 	"backend/models"
@@ -37,6 +38,8 @@ func (w *PaymentWorker) ProcessExpensePaymentAsync(expenseID int64) {
 
 		log.Printf("Starting payment processing for expense %d", expenseID)
 
+		tx := db.DB.Begin()
+
 		// Retry logic, 3 times max, can be improved by making an api to retry failed payments manually
 		for attempt := 1; attempt <= MaxRetries; attempt++ {
 			// Fetch fresh expense data
@@ -51,6 +54,9 @@ func (w *PaymentWorker) ProcessExpensePaymentAsync(expenseID int64) {
 				return
 			}
 
+			// part of log
+			originalStatus := expense.Status
+
 			updatedExpense, updatedApproval, err := w.paymentService.ProcessPayment(ctx, &expense, expense.Approval)
 
 			if err != nil {
@@ -62,7 +68,11 @@ func (w *PaymentWorker) ProcessExpensePaymentAsync(expenseID int64) {
 						} else {
 							expense.Approval.Notes = failureNote
 						}
-						db.DB.Save(expense.Approval)
+						if err := tx.Save(expense.Approval).Error; err != nil {
+							tx.Rollback()
+							log.Printf("Failed to update approval %d: %v", expense.Approval.ID, err)
+							return
+						}
 					}
 					return
 				}
@@ -72,17 +82,39 @@ func (w *PaymentWorker) ProcessExpensePaymentAsync(expenseID int64) {
 				continue
 			}
 
-			if err := db.DB.Save(updatedExpense).Error; err != nil {
+			audit, err := actions.ExpenseAuditLog(actions.ExpenseAuditLogInput{
+				ExpenseID:  expense.ID,
+				ActorID:    nil,
+				FromStatus: originalStatus,
+				ToStatus:   updatedExpense.Status,
+				Reason:     "Expense completed by payment processing",
+			})
+			if err != nil {
+				log.Printf("Failed to create audit log for expense %d: %v", expense.ID, err)
+				return
+			}
+
+			if err := tx.Save(updatedExpense).Error; err != nil {
+				tx.Rollback()
 				fmt.Printf("Failed to update expense %d: %v", expense.ID, err)
 				return
 			}
 
 			if updatedApproval != nil {
-				if err := db.DB.Save(updatedApproval).Error; err != nil {
+				if err := tx.Save(updatedApproval).Error; err != nil {
+					tx.Rollback()
 					fmt.Printf("Failed to update approval for expense %d: %v", expense.ID, err)
 					return
 				}
 			}
+
+			if err := tx.Create(audit).Error; err != nil {
+				tx.Rollback()
+				fmt.Printf("Failed to create audit log for expense %d: %v", expense.ID, err)
+				return
+			}
+
+			tx.Commit()
 		}
 	}()
 }

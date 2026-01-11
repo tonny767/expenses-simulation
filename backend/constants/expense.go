@@ -3,11 +3,10 @@ package constants
 type ExpenseStatus string
 
 const (
-	ExpenseStatusPending      ExpenseStatus = "pending"
-	ExpenseStatusApproved     ExpenseStatus = "approved"
-	ExpenseStatusRejected     ExpenseStatus = "rejected"
-	ExpenseStatusAutoApproved ExpenseStatus = "auto-approved"
-	ExpenseStatusCompleted    ExpenseStatus = "completed"
+	ExpenseStatusPending   ExpenseStatus = "pending"
+	ExpenseStatusApproved  ExpenseStatus = "approved"
+	ExpenseStatusRejected  ExpenseStatus = "rejected"
+	ExpenseStatusCompleted ExpenseStatus = "completed"
 )
 
 // does not require type conversion when used in domains

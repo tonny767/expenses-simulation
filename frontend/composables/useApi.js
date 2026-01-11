@@ -3,7 +3,7 @@ export const useApi = (role) => {
 
   const base =
     role === 'manager'
-      ? '/v1/api/manager'  // Changed from /api to /backend/api
+      ? '/v1/api/manager'  // Changed from /api to /v1/api
       : role === 'user'
       ? '/v1/api/user'
       : '/v1/api'

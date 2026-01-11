@@ -38,6 +38,11 @@ func AuthRoutes(r *gin.RouterGroup) {
 		managerExpenses.PUT("/:id/reject", controllers.RejectExpense)
 	}
 
+	managerLogs := manager.Group("/expense-logs")
+	{
+		managerLogs.GET("", controllers.GetExpenseAuditLog)
+	}
+
 	user := protected.Group("/user", middleware.RequireRole("user"))
 
 	user.GET("/dashboard", func(c *gin.Context) {

@@ -45,8 +45,7 @@ func CanProceed(exp *models.Expense) error {
 		return nil
 
 	case c.ExpenseStatusApproved,
-		c.ExpenseStatusRejected,
-		c.ExpenseStatusAutoApproved:
+		c.ExpenseStatusRejected:
 		return ErrExpenseAlreadyFinalized
 
 	default:
