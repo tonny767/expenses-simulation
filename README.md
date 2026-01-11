@@ -1,6 +1,6 @@
 # Expense Management System
 
-A backend-focused Expense Management System built as a take-home challenge.
+Expense Management System
 
 ---
 
