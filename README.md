@@ -46,6 +46,12 @@ Download Docker Desktop (simplest) or make sure docker works by doing:
 ```bash
 docker info
 ```
+
+copy .env 
+```
+copy .env.example .env
+```
+
 then you can do:
 ```bash
 docker compose up --build
