@@ -378,9 +378,7 @@ The test covered all the actions
 * Running mock payment process in auto-approved and approved expenses
 
 ---
-## 11. Final Note
-
-This system prioritizes **financial correctness, security, and extensibility** over feature completeness. Certain UX and automation improvements were intentionally deferred to ensure a solid and maintainable core architecture.
+## 11. Misc Notes
 
 Login Details 
 ```bash
