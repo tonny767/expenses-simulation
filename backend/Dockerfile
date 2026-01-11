@@ -1,12 +1,14 @@
-FROM golang:1.23-alpine
+FROM golang:1.24-alpine
 
 WORKDIR /app
 
 # Install git (required for go mod download)
-RUN apk add --no-cache git
+# gcc and musl-dev are needed to run testings
+RUN apk add --no-cache gcc musl-dev
 
 # Copy go mod files FIRST
-COPY go.mod go.sum ./
+COPY go.mod ./
+RUN go mod tidy
 RUN go mod download
 
 # Copy the rest of the source

@@ -4,6 +4,26 @@ A backend-focused Expense Management System built as a take-home challenge.
 
 ---
 
+## Technology Stack
+
+**Backend:**
+- Go 1.23 + Gin Framework
+- GORM (PostgreSQL ORM)
+- JWT Authentication
+- Background Workers (Goroutines)
+
+**Frontend:**
+- Nuxt.js 4 + Vue 3 (Composition API)
+- Shadcn-vue + TailwindCSS
+
+**Database:**
+- PostgreSQL 18
+
+**DevOps:**
+- Docker & Docker Compose
+- Goose Migrations
+---
+
 ## 1. Setup & Run Instructions
 
 ### Prerequisites
@@ -31,6 +51,16 @@ then you can do:
 docker compose up --build
 ```
 
+For the data seeding, make sure all three services works first, then:
+
+```bash
+docker compose exec backend sh
+```
+
+Then run this command to seed the data, make sure your DATABASE_URL in .env is correct first
+```
+goose -dir ./migrations postgres "$DATABASE_URL" up
+```
 
 you should see all three services started (expense-backend, expense-frontend and expense-postgres)
 
@@ -40,9 +70,9 @@ Notes:
 
 Services started:
 
-* API server: `http://backend:8080` for Docker or `http://localhost:8080` for manual setup
-* PostgreSQL
-* 
+* Backend API server: `http://backend:8080` for Docker or `http://localhost:8080` for manual setup
+* Database PostgreSQL
+* Frontend Nuxt/Vue.js
 * Background payment worker
 
 ---
@@ -50,32 +80,87 @@ Services started:
 
 Make sure you have the required packages ready.
 
-#### GoLang setup
+### Postgresql setup
+If you have psql ready or running from Docker can skip this part, in MacOS run this:
+```bash
+brew install postgres@18
+```
+
+make sure psql runs, can also determine your own User by e.g. `psql -U postgres -H postgres`
+```bash
+psql
+```
+inside run commands to add DB
+```bash
+CREATE DATABASE expenses;
+```
+
+then `\q` and you should already have your database ready, don't forget to modify your `.env` according to the database you initialized above.
+
+---
+
+### GoLang setup
 
 Go to backend
 
-`cd backend`
+```bash
+cd backend
+```
 
 Run this to create the `go.sum`
-
-`go mod tidy`
+```bash
+go mod tidy
+```
 
 Install the GoLang 
+```bash
+go mod download
+```
 
-`go install`
+Install `goose` for migrations 
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+```
 
+run the database seeding, make sure you have db ready and `.env` written. includes user and sample expenses 
+```bash
+goose -dir ./migrations postgres "$DATABASE_URL" up
+```
 
+now you can run the `main.go`
+```bash
+go run main.go
+```
+---
 
+### Nuxt Setup
 
+```bash
+cd frontend
+```
+if you can `npm` can just do
+```bash
+npm install
+```
+then you can run:
+```bash
+npx nuxi prepare
+
+```
+to run the frontend, simply do: 
+```bash
+npx nuxi dev
+```
 
 ---
 
 ## 2. API Documentation
 
+To see all the available GET/POST/PUT functions
 Swagger UI is available at:
 
 ```
-http://localhost:8080/swagger/index.html
+http://localhost:3000/v1/api/swagger/index.html
 ```
 
 ### Currency Rules
@@ -85,7 +170,7 @@ http://localhost:8080/swagger/index.html
 
 ```json
 {
-  "amount_idr": 150000,
+  "amount_idr": 150000, // Rp 150.000
   "description": "Client meeting lunch",
   "receipt_url": "/receipts/lunch.png"
 }
@@ -99,38 +184,48 @@ http://localhost:8080/swagger/index.html
 
 * Can only see **their own expenses**
 * Can view:
-
   * Expense details
   * Expense status
   * Approval status
+* Can create:
+  * Expense
 
 ### Manager
 
 * Can see **all expenses**
 * Can view:
+  * Expense audit logs
+  * Pending Approvals record
+  * All user's expenses record
+* Can approve/reject expenses
 
-  * Expense owner
-  * Approval records
-* Responsible for approving or rejecting expenses
 
 ---
-
 ## 4. Business Rules Implementation
 
 ### Approval Threshold
 
-* Expenses below **IDR 1,000,000** are auto-approved
+* Expenses below **Rp 1.000.000** are auto-approved
 * Expenses above the threshold require manager approval
+* Limit is Minimum of **Rp. 10.000** and Maximum of **Rp. 50.000.000** 
 
 ### Status Flow
 
+Auto-approved flow:
+```
+PENDING
+  ↓ (auto-approved)
+APPROVED
+  ↓ (payment worker)
+COMPLETED
+```
+
+Approval required flow:
 ```
 PENDING
   ↓ (manager approves)
 APPROVED
   ↓ (payment worker)
-PROCESSING
-  ↓ (success)
 COMPLETED
 ```
 
@@ -143,7 +238,7 @@ PENDING → REJECTED
 ### Key Rules
 
 * Approval must complete before payment starts
-* Payment is asynchronous
+* Payment is asynchronous (refresh page to see changes on status after approving or creating ~4-5 seconds)
 * Expense remains `APPROVED` until payment succeeds
 
 ---
@@ -152,13 +247,13 @@ PENDING → REJECTED
 
 ### Clean Architecture
 
-Development order:
+Development order using GIN+GORM as framework:
 
 1. Domains
 2. Business rules
 3. Actions (use cases)
 4. Migrations
-5. Repositories
+5. Controllers
 6. API layer
 
 This ensures business logic is independent of HTTP and frameworks.
@@ -173,7 +268,7 @@ This ensures business logic is independent of HTTP and frameworks.
 ### Background Worker
 
 * Payment processing handled asynchronously
-* Uses idempotency safeguards
+* Uses idempotency safeguards (currently its just mock so real one is not yet exist)
 
 ---
 
@@ -182,18 +277,25 @@ This ensures business logic is independent of HTTP and frameworks.
 * Currency is IDR only
 * Single approval level
 * Expense data is sufficiently displayed in table view
-* Backend operates fully in UTC
+* Backend operates fully in UTC, frontend will translate to `Asia/Jakarta`
 * JWT stored in HTTP-only cookies
+* Receipt URL is hard-coded for now
+* Mock payment that prevents idempotency is yet to work
+* Users are pre-seeded, no register required
+* Status transition is enforced in `canTransition` rules.
+* Right now approval does not get shown
+* Removed auto-approved as status because its redundant
+* Reverse Proxy is applied in `/v1/api` format
+* Expense and Approval must have same statuses across all the processes (unless `COMPLETED` flag)
 
 ---
 
 ## 7. Limitations
 
-* Status transition rules not fully enforced
-* No approval audit log
-* No retry/backoff for failed payments
-* Worker restart is manual via API
+* No approval audit log (in the approvals part)
 * No rate limiting implemented
+* No production-ready environment 
+* No manual entry API to retry the payment process
 
 ---
 
@@ -203,13 +305,17 @@ This ensures business logic is independent of HTTP and frameworks.
 
 Ensures financial correctness but increases state complexity.
 
-### No Expense Detail Page
-
-Reduces UI complexity; table already contains all relevant information.
-
 ### Worker Failure Handling
 
-If worker fails, expense remains `APPROVED` and requires manual retry.
+If worker fails, expense and approval remains `APPROVED` and requires manual modification.
+
+### Pre-seeded accounts
+
+No registration section
+
+### No email notifications
+
+For this feature, I need to enable approval flow and set manager first before creating approval, not possible with current approach unless I hard-coded the approver.
 
 ---
 
@@ -223,21 +329,64 @@ If worker fails, expense remains `APPROVED` and requires manual retry.
 ### Features
 
 * Multi-level approvals
-* Approval audit logs
-* Retry strategy with backoff
+* More audit logs showing e.g login
+* Processing flag for expenses
 * Dead-letter queue
+* Login and Logout approach more beautifully
+* Toaster instead of alert
+* Idempotency table to limit user submitting
+* Using UUID to access details and make sure no ID is exposed in the website (can hold security risk)
+* User delete `PENDING` expenses
 
 ### DevOps
 
 * Worker health checks
 * Auto-restart workers
+* Swagger
+* Docker-ready environment
 * Metrics and structured logging
 
 ---
+## 10. Testing
+In Docker `docker compose exec backend sh` in manual setup `cd backend`
 
-## 10. Final Note
+Go to tests folder
+```
+cd tests
+```
+
+Run the test
+```
+go test
+```
+
+PASSED will be the final result
+The test covered all the actions 
+* Auto-approved Expense
+* Pending Approval Expense
+* Invalid Amount Expense
+* Approve Expense
+* Reject Expense
+* Running mock payment process in auto-approved and approved expenses
+
+---
+## 11. Final Note
 
 This system prioritizes **financial correctness, security, and extensibility** over feature completeness. Certain UX and automation improvements were intentionally deferred to ensure a solid and maintainable core architecture.
 
+Login Details 
+```bash
+// Manager
+alice@manager.com
+password123
 
-initially have auto-approved status, but removed because not needed.
+// User
+bob@user.com
+password123
+
+dave@user.com
+password123
+
+eve@user.com
+password123
+```
