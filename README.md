@@ -336,6 +336,7 @@ For this feature, I need to enable approval flow and set manager first before cr
 
 * Explicit state machine for expense transitions
 * Domain-level transition guards
+* Repository implementation
 
 ### Features
 
@@ -346,7 +347,7 @@ For this feature, I need to enable approval flow and set manager first before cr
 * Login and Logout approach more beautifully
 * Toaster instead of alert
 * Idempotency table to limit user submitting
-* Using UUID to access details and make sure no ID is exposed in the website (can hold security risk)
+* Using UUID to do explicit API calls like accessing details page or approve/rejecting expenses and make sure no ID is exposed in the website (can hold security risk)
 * User delete `PENDING` expenses
 
 ### DevOps
