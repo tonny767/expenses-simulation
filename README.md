@@ -331,6 +331,7 @@ For this feature, I need to enable approval flow and set manager first before cr
 
 * Explicit state machine for expense transitions
 * Domain-level transition guards
+* Repository implementation
 
 ### Features
 
