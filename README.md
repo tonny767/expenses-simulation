@@ -1,9 +1,5 @@
 # Expense Management System
-
-Expense Management System
-
 ---
-
 ## Technology Stack
 
 **Backend:**
