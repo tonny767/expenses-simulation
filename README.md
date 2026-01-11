@@ -57,6 +57,11 @@ then you can do:
 docker compose up --build
 ```
 
+you can run the container:
+```bash
+docker compose run
+```
+
 For the data seeding, make sure all three services works first, then:
 
 ```bash
