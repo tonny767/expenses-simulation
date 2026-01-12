@@ -351,8 +351,7 @@ For this feature, I need to enable approval flow and set manager first before cr
 * Worker health checks
 * Auto-restart workers
 * Swagger
-* Docker-ready environment
-* Metrics and structured logging
+* Metrics and structured logging for more modules
 
 ---
 ## 10. Testing
